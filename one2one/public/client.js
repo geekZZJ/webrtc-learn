@@ -125,7 +125,7 @@ function createPeerConnection(roomId) {
     pc = new RTCPeerConnection({
       iceServers: [
         {
-          urls: "stun:1.116.74.242:3478",
+          urls: "",
           username: "",
           credential: "",
         },
