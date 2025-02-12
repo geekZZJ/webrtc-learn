@@ -41,7 +41,7 @@ function connect() {
     console.log("receive joined message!", roomId, id);
 
     createPeerConnection(roomId);
-    // startConnectionStats();
+    startConnectionStats();
 
     // 绑定本地流的媒体轨道
     stream.getTracks().forEach((track) => pc.addTrack(track, stream));
@@ -177,28 +177,52 @@ function startConnectionStats() {
 
   setInterval(async () => {
     const stats = await pc.getStats();
-    let mediaInfo = {
-      outboundStreams: 0,
-      inboundStreams: 0,
-    };
 
     stats.forEach((report) => {
-      // 检查发送流
-      if (report.type === "outbound-rtp") {
-        mediaInfo.outboundStreams++;
-      }
-
-      // 检查接收流
+      // 检查入站RTP流的丢包情况
       if (report.type === "inbound-rtp") {
-        mediaInfo.inboundStreams++;
+        const packetsLost = report.packetsLost;
+        const packetsReceived = report.packetsReceived;
+        const lossRate = (
+          (packetsLost / (packetsLost + packetsReceived)) *
+          100
+        ).toFixed(2);
+
+        console.log(`${report.kind} 流丢包统计:`, {
+          总包数: packetsLost + packetsReceived,
+          丢失包数: packetsLost,
+          接收包数: packetsReceived,
+          丢包率: `${lossRate}%`,
+          帧率: report.framesPerSecond || "N/A", // 视频流特有
+          "jitter(ms)": report.jitter * 1000,
+        });
+      }
+
+      // 检查出站RTP流的丢包情况
+      if (report.type === "outbound-rtp") {
+        const packetsSent = report.packetsSent;
+        const packetsLost = report.retransmittedPacketsSent || 0; // 重传的包数
+        const lossRate = ((packetsLost / packetsSent) * 100).toFixed(2);
+
+        console.log(`${report.kind} 发送流统计:`, {
+          发送包数: packetsSent,
+          重传包数: packetsLost,
+          重传率: `${lossRate}%`,
+          帧率: report.framesPerSecond || "N/A", // 视频流特有
+        });
+      }
+
+      // 检查远程入站RTP流（对方发送给我们的）
+      if (report.type === "remote-inbound-rtp") {
+        const lossRate = (report.fractionLost * 100).toFixed(2);
+        console.log(`远程 ${report.kind} 流统计:`, {
+          "往返时间(ms)": (report.roundTripTime * 1000).toFixed(2),
+          丢包率: `${lossRate}%`,
+          "jitter(ms)": report.jitter * 1000,
+        });
       }
     });
-
-    console.log("媒体流统计:", {
-      发送流数量: mediaInfo.outboundStreams,
-      接收流数量: mediaInfo.inboundStreams,
-    });
-  }, 2000);
+  }, 1000);
 }
 
 connectBtn.onclick = connSignalServer;
