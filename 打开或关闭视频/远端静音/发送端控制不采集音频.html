@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>发送端控制：不采集音频</title>
+  </head>
+  <body>
+    <script>
+      // 调用 getUserMedia API 获取音视频流
+      navigator.mediaDevices
+        .getUserMedia({
+          // TODO 将 audio 设置为 false，即不采集音频
+          audio: false,
+          video: true,
+        })
+        .then(gotLocalMediaStream)
+        .catch((error) => {
+          console.log("navigator.getUserMedia error: ", error);
+        });
+    </script>
+  </body>
+</html>

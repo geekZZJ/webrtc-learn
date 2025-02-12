@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebRTC</title>
+  </head>
+  <body>
+    <div>
+      <input type="text" id="roomInput" />
+      <button id="connectServer">Connect Sig Server</button>
+      <button id="btnLeave" disabled>Leave</button>
+    </div>
+    <div>
+      <div>本地视频</div>
+      <video id="localVideo" autoplay playsinline></video>
+    </div>
+    <div>
+      <div>远程视频</div>
+      <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+
+    <script>
+      function loadScriptWithPromise(url) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = url;
+          script.type = "text/javascript";
+
+          script.onload = () => {
+            console.log(`${url} loaded successfully.`);
+            resolve();
+          };
+
+          script.onerror = () => {
+            console.error(`Error loading script: ${url}`);
+            reject(new Error(`Failed to load script: ${url}`));
+          };
+
+          document.head.appendChild(script);
+        });
+      }
+
+      loadScriptWithPromise("./socket.io.js").then((res) => {
+        console.log("脚本加载完成");
+        loadScriptWithPromise("./client.js");
+      });
+    </script>
+  </body>
+</html>

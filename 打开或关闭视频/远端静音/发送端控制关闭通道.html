@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>发送端控制：关闭通道</title>
+  </head>
+  <body>
+    <script>
+      function gotLocalMediaStream(mediaStream) {
+        localVideo.srcObject = mediaStream;
+        // localStream = mediaStream;
+        // 将本地流的轨道添加到本地连接中
+        mediaStream.getTracks().forEach((track) => {
+          // TODO 对 track 做判断，如果是音频就不进行绑定
+          if (track.kink !== "audio") {
+            localPeerConnection.addTrack(track, mediaStream);
+          }
+        });
+
+        localPeerConnection
+          .createOffer({
+            // offerToReceiveAudio: 1, // 期望接收音频
+            offerToReceiveVideo: 1, // 期望接收视频
+          })
+          .then(createdOffer)
+          .catch((error) => {
+            console.log("createOffer error: ", error);
+          });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RTCPeerConnection</title>
+  </head>
+  <body>
+    <h1>Realtime communication with WebRTC</h1>
+    <video id="localVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+
+    <div>
+      <button id="startButton">start</button>
+      <button id="callButton">call</button>
+      <button id="hangupButton">hang up</button>
+    </div>
+
+    <script>
+      const localVideo = document.getElementById("localVideo");
+      const remoteVideo = document.getElementById("remoteVideo");
+      // 创建 RTCPeerConnection 对象
+      const localPeerConnection = new RTCPeerConnection();
+      // 创建远端 RTCPeerConnection
+      const remotePeerConnection = new RTCPeerConnection();
+      let localStream;
+
+      // 监听远端轨道并显示在远端视频标签上
+      remotePeerConnection.ontrack = (event) => {
+        console.log("Remote stream added", event);
+        remoteVideo.srcObject = event.streams[0];
+      };
+
+      // 调用 getUserMedia API 获取音视频流
+      navigator.mediaDevices
+        .getUserMedia({
+          video: true,
+        })
+        .then(gotLocalMediaStream)
+        .catch((error) => {
+          console.log("navigator.getUserMedia error: ", error);
+        });
+
+      // 如果 getUserMedia 获得流，则会回调该函数
+      // 在该函数中一方面要将获取的音视频流展示出来
+      // 另一方面是保存到 localSteam
+      function gotLocalMediaStream(mediaStream) {
+        localVideo.srcObject = mediaStream;
+        // localStream = mediaStream;
+        // 将本地流的轨道添加到本地连接中
+        mediaStream.getTracks().forEach((track) => {
+          localPeerConnection.addTrack(track, mediaStream);
+        });
+
+        localPeerConnection
+          .createOffer({
+            // offerToReceiveAudio: 1, // 期望接收音频
+            offerToReceiveVideo: 1, // 期望接收视频
+          })
+          .then(createdOffer)
+          .catch((error) => {
+            console.log("createOffer error: ", error);
+          });
+      }
+
+      // 当创建 offer 成功后，会调用该函数
+      function createdOffer(offer) {
+        console.log("createdOffer", offer);
+        // 将 offer 保存到本地
+        localPeerConnection
+          .setLocalDescription(offer)
+          .then(() => {
+            console.log(
+              "Local description set successfully.",
+              localPeerConnection
+            );
+            // 远端 pc 将 offer 保存起来
+            return remotePeerConnection.setRemoteDescription(
+              localPeerConnection.localDescription
+            );
+          })
+          .then(() => {
+            console.log(
+              "Remote description set successfully.",
+              remotePeerConnection
+            );
+            // 远端 pc 创建 answer
+            return remotePeerConnection.createAnswer();
+          })
+          .then((answer) => {
+            console.log("Answer created.", answer);
+            // 远端保存 answer
+            return remotePeerConnection.setLocalDescription(answer);
+          })
+          .then(() => {
+            console.log(
+              "remotePeerConnection setLocalDescription successfully."
+            );
+            localPeerConnection
+              .setRemoteDescription(remotePeerConnection.localDescription)
+              .then(() => {
+                console.log(
+                  "localPeerConnection setRemoteDescription successfully."
+                );
+              });
+          })
+          .catch((error) => {
+            console.log("error", error);
+          });
+      }
+
+      localPeerConnection.onicecandidate = (event) => {
+        // 获取到触发 icecandidate 事件的 RTCPeerConnection 对象
+        // 获取到具体的 Candidate
+        const peerConnection = event.target;
+        const iceCandidate = event.candidate;
+
+        console.log("onicecandidate11111", iceCandidate);
+        if (iceCandidate) {
+          // 创建 RTCIceCandidate 对象
+          const newIceCandidate = new RTCIceCandidate(iceCandidate);
+          // 得到对端的 RTCPeerConnection
+          const otherPeer = getOtherPeer(peerConnection);
+
+          // 将本地获到的 Candidate 添加到远端的 RTCPeerConnection 对象中
+          otherPeer
+            .addIceCandidate(newIceCandidate)
+            .then(() => {
+              console.log("addIceCandidate success");
+            })
+            .catch((error) => {
+              console.log("addIceCandidate error:", error);
+            });
+        }
+      };
+
+      // 实现 getOtherPeer 方法
+      function getOtherPeer(currentPeer) {
+        return currentPeer === localPeerConnection
+          ? remotePeerConnection
+          : localPeerConnection;
+      }
+
+      // localPeerConnection.getStats(null).then((stats) => {
+      //   // 遍历每个 report
+      //   stats.forEach((report) => {
+      //     // 将每个 report 的详细信息打印出来
+      //     console.log("report", report);
+      //   });
+      // });
+    </script>
+  </body>
+</html>
