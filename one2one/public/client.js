@@ -126,8 +126,8 @@ function createPeerConnection(roomId) {
       iceServers: [
         {
           urls: "stun:1.116.74.242:3478",
-          username: "zzj",
-          credential: "112233",
+          username: "",
+          credential: "",
         },
       ],
     });
