@@ -125,9 +125,9 @@ function createPeerConnection(roomId) {
     pc = new RTCPeerConnection({
       iceServers: [
         {
-          urls: "",
-          username: "",
-          credential: "",
+          urls: "stun:1.116.74.242:3478",
+          username: "zzj",
+          credential: "112233",
         },
       ],
     });
@@ -213,16 +213,16 @@ function startConnectionStats() {
       }
 
       // 检查远程入站RTP流（对方发送给我们的）
-      if (report.type === "remote-inbound-rtp") {
-        const lossRate = (report.fractionLost * 100).toFixed(2);
-        console.log(`远程 ${report.kind} 流统计:`, {
-          "往返时间(ms)": (report.roundTripTime * 1000).toFixed(2),
-          丢包率: `${lossRate}%`,
-          "jitter(ms)": report.jitter * 1000,
-        });
-      }
+      // if (report.type === "remote-inbound-rtp") {
+      //   const lossRate = (report.fractionLost * 100).toFixed(2);
+      //   console.log(`远程 ${report.kind} 流统计:`, {
+      //     "往返时间(ms)": (report.roundTripTime * 1000).toFixed(2),
+      //     丢包率: `${lossRate}%`,
+      //     "jitter(ms)": report.jitter * 1000,
+      //   });
+      // }
     });
-  }, 1000);
+  }, 2000);
 }
 
 connectBtn.onclick = connSignalServer;
